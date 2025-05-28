@@ -1,1 +1,137 @@
+openapi: 3.1.0
+info:
+  title: Zoom Scheduler API
+  description: Use this API to create and list Zoom meetings for a specific user.
+  version: 1.0.0
+servers:
+  - url: https://api.zoom.us/v2
+    description: Zoom Production API
+paths:
+  /users/{userId}/meetings:
+    post:
+      operationId: createMeeting
+      summary: Schedule a Zoom meeting
+      description: Creates a scheduled Zoom meeting for the given user.
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: The user's Zoom ID or email.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - topic
+                - type
+              properties:
+                topic:
+                  type: string
+                  description: Title of the meeting
+                type:
+                  type: integer
+                  enum: [1, 2, 3, 8]
+                  description: |
+                    Meeting type:
+                    - 1: Instant
+                    - 2: Scheduled
+                    - 3: Recurring with no fixed time
+                    - 8: Recurring with fixed time
+                start_time:
+                  type: string
+                  format: date-time
+                  description: Start time in ISO 8601 format (UTC)
+                duration:
+                  type: integer
+                  description: Meeting duration in minutes
+                timezone:
+                  type: string
+                  description: Timezone, e.g. America/New_York
+                agenda:
+                  type: string
+                  description: Meeting agenda
+                password:
+                  type: string
+                  description: Meeting password
+      responses:
+        '201':
+          description: Meeting successfully created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  join_url:
+                    type: string
+                    format: uri
+                  start_time:
+                    type: string
+                    format: date-time
+                  topic:
+                    type: string
+        '400':
+          description: Bad request
+        '401':
+          description: Unauthorized
+    get:
+      operationId: listMeetings
+      summary: List upcoming meetings
+      description: Retrieves a list of upcoming meetings for a user.
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: The user's Zoom ID or email
+        - name: type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [scheduled, live, upcoming]
+          description: Filter meeting type
+      responses:
+        '200':
+          description: A list of meetings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  meetings:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        topic:
+                          type: string
+                        start_time:
+                          type: string
+                          format: date-time
+                        join_url:
+                          type: string
+                          format: uri
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
 
